@@ -2,7 +2,28 @@
                     
 Google has made available a large number of Pre-trained Machine Learning Models. You can check the complete list here https://coral.ai/models/all/.
 Some of the computer vision models have been packaged as canned models and can be downloaded from this link https://dl.google.com/coral/canned_models/all_models.tar.gz.
-This repo contains the code for testing these canned models using a single python script.<br>
+This repo contains the code for testing following canned models using a single python script.<br>
+
+### Image Classification Models
+```
+inception_v1_224_quant_edgetpu.tflite, imagenet_labels.txt
+inception_v2_224_quant_edgetpu.tflite, imagenet_labels.txt
+inception_v3_299_quant_edgetpu.tflite, imagenet_labels.txt
+inception_v4_299_quant_edgetpu.tflite, imagenet_labels.txt
+mobilenet_v1_1.0_224_quant_edgetpu.tflite, imagenet_labels.txt
+mobilenet_v2_1.0_224_quant_edgetpu.tflite, imagenet_labels.txt
+
+mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite, inat_bird_labels.txt
+mobilenet_v2_1.0_224_inat_insect_quant_edgetpu.tflite, inat_insect_labels.txt
+mobilenet_v2_1.0_224_inat_plant_quant_edgetpu.tflite, inat_plant_labels.txt
+```
+
+### Object Detection Models
+```
+mobilenet_ssd_v1_coco_quant_postprocess_edgetpu.tflite, coco_labels.txt
+mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite, coco_labels.txt
+mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite, coco_labels.txt
+```
 
 All you need is a Raspberry Pi and a Picamera OR USB Camera.
 
