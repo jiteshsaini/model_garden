@@ -4,9 +4,6 @@ $model=@$_POST["model_file"];
 $cmd_generated=@$_POST["command_generated"];
 $edgetpu=@$_POST["edgetpu"];
 
-//$model=@$_GET["mm"];
-//$cmd_rx=@$_GET["cc"];
-
 if($model!=''){
 	$myfile = fopen("model.txt", "w") or die("Unable to open file!");
 	fwrite($myfile, $model);
