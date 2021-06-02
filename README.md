@@ -67,6 +67,9 @@ you should see the following message on terminal
 </p>
 
 
-You can switch between the models using the buttons provided on Web GUI.<br>
-If you have a USB Coral Accelerator, then attach it to Raspberry Pi. Now you can press the button at top right corner to run the models which are compiled for it.
+Now, you should start seeing the camera video with overlays on the Web GUI.
+You can switch between the various models using the buttons provided on Web GUI. Based on your selection the respective model along with its label file gets loaded in the background during run time itself. This allows you to quickly change the models and appreciate the inferencing speeds<br>
+
+## Attaching USB Coral Accelerator
+If you have a USB Coral Accelerator, then attach it to Raspberry Pi. Now you can press the button at top right corner to run the models which are compiled to run on Coral Accelerator. These models have ```_edgetpu``` in their labels.
 Do not press this button if you haven't connected USB Coral Accelerator to Raspberry Pi. Otherwise the script will halt and you will have to restart the script.
