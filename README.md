@@ -73,3 +73,15 @@ You can switch between the various models using the buttons provided on Web GUI.
 ## Attaching USB Coral Accelerator
 If you have a USB Coral Accelerator, then attach it to Raspberry Pi. Now you can press the button at top right corner of Web GUI to run the models which are compiled to run on Coral Accelerator. These models have ```_edgetpu``` in their labels.
 Do not press this button if you haven't connected USB Coral Accelerator to Raspberry Pi. Otherwise the script will halt and you will have to restart the script.
+
+## Performance on Raspberry Pi 4
+
+<p align="center">
+   <img src="https://github.com/jiteshsaini/files/blob/main/img/graph_pi4.jpeg">
+</p>
+
+## Performance on Raspberry Pi 3A +
+
+<p align="center">
+   <img src="https://github.com/jiteshsaini/files/blob/main/img/graph_pi3a.jpeg">
+</p>
