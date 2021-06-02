@@ -1,7 +1,7 @@
 # Model Garden
                     
-Google has made available a large number of Pre-trained Machine Learning Models. You can check the complete list here https://coral.ai/models/all/.
-Some of the computer vision models have been packaged as canned models and can be downloaded from this link https://dl.google.com/coral/canned_models/all_models.tar.gz.
+Google has published a large number of Pre-trained Machine Learning Models for anyone to download and experiment. You can check the complete list of freely available models here https://coral.ai/models/all/.
+Some of the computer vision models have been packaged as canned models and can be downloaded from this link https://dl.google.com/coral/canned_models/all_models.tar.gz.<br>
 This repo contains the code for testing following canned models using a single python script.<br>
 
 ### Image Classification Models
