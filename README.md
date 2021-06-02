@@ -25,13 +25,22 @@ mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite, coco_labels.txt
 mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite, coco_labels.txt
 ```
 
-All you need is a Raspberry Pi and a Picamera OR USB Camera.
+All you need is a Raspberry Pi and a Picamera OR USB Camera to run this project.
 
 ## Configure your Raspberry Pi to Run this Project
 Download this repo on your Raspberry Pi and run the bash script "install.sh" using command ```sudo sh install.sh```.
-This bash script will download all the necessary packages/libraries required for this project. Also, the all the Models and the source code will be downloaded automatically
-and placed in the correct path. <br>
-You need to wait patiently as the script can take upto 20 minutes (it can be much faster also, depends on your internet speed) to complete the task.
+This bash script will download all the necessary packages/libraries required for this project. Also, the all the Models and the source code will be downloaded automatically and placed in the correct path. <br>
+You need to wait patiently as the script can take upto 20 minutes (depending on your internet speed) to complete the task.
+
+The script perfoms following actions on your Raspberry Pi automatically:- 
+
+- Update & upgrade Raspberry Pi OS
+- Install Apache Webserver and PHP
+- Install Tensorflow Lite and Google Coral Coral USB Accelerator Libraries
+- Install OpenCV
+- Download pre-trained Models from google coral repository
+- Download the model_garden source code 
+- Move the models and code to desired location in your Raspbrerry Pi and set permissions.
 
 ## How to run the code
 Open terminal in Raspberry Pi and type the following commands:-
@@ -60,4 +69,4 @@ you should see the following message on terminal
 
 You can switch between the models using the buttons provided on Web GUI.<br>
 If you have a USB Coral Accelerator, then attach it to Raspberry Pi. Now you can press the button at top right corner to run the models which are compiled for it.
-Do not press this button if you haven't connected USB Coral Accelerator to Raspberry Pi. Otherwise the script will halt and you will have to restart it as mentioned above.
+Do not press this button if you haven't connected USB Coral Accelerator to Raspberry Pi. Otherwise the script will halt and you will have to restart the script.
