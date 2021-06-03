@@ -25,7 +25,7 @@ mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite, coco_labels.txt
 mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite, coco_labels.txt
 ```
 
-All you need is a Raspberry Pi and a Picamera OR USB Camera to run this project.
+All you need is a Raspberry Pi and a Picamera or a USB Camera to run this project.
 
 ## Configure your Raspberry Pi to Run this Project
 Download this repo on your Raspberry Pi and run the bash script "install.sh" using command ```sudo sh install.sh```.
@@ -36,7 +36,7 @@ The script perfoms following actions on your Raspberry Pi automatically:-
 
 - Update & upgrade Raspberry Pi OS
 - Install Apache Webserver and PHP
-- Install Tensorflow Lite and Google Coral Coral USB Accelerator Libraries
+- Install Tensorflow Lite and Google Coral USB Accelerator Libraries
 - Install OpenCV
 - Download pre-trained Models from google coral repository
 - Download the model_garden source code 
