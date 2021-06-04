@@ -14,6 +14,9 @@ or Object Detection based on the Model selected.
 
 You can switch the currently loaded model using a Web GUI during run time. 
 
+Watch this video to see this code in action:-
+https://youtu.be/7gWCekMy1mw
+
 '''
 
 from __future__ import absolute_import
