@@ -1,6 +1,11 @@
 <!--
 Project: Model Garden
-Created by: Jitesh Saini
+Author: Jitesh Saini
+Github: https://github.com/jiteshsaini
+website: https://helloworld.co.in
+
+Watch this video to see this code in action:-
+https://youtu.be/7gWCekMy1mw
 -->
 <html>
 <head>        
