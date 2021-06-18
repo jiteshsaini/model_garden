@@ -1,5 +1,14 @@
 # Model Garden
 
+<p align="left">
+Article: <a href='https://helloworld.co.in/article/model-garden-testing-20-machine-learning-on-models-raspberry-pi' target='_blank'>
+   <img src='https://github.com/jiteshsaini/files/blob/main/img/logo3.gif' height='40px'>
+</a> Watch the video on Yotube: 
+<a href='https://youtu.be/7gWCekMy1mw' target='_blank'>
+   <img src='https://github.com/jiteshsaini/files/blob/main/img/btn_youtube.png' height='40px'>
+</a>
+</p>
+
 <p align="center">
    <img src="https://github.com/jiteshsaini/files/blob/main/img/model_garden.gif">
 </p>
