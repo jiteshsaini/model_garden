@@ -15,6 +15,12 @@ echo "***************************************************************"
 sudo apt-get install apache2 -y
 sudo apt-get install php libapache2-mod-php -y
 
+echo "***************************************************************"
+echo "*****Allowing execution of system commands from PHP************"
+echo "***************************************************************"
+
+echo "pi ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 echo "***************************************************************"
 echo "******Installing Tensorflow Lite and USB Coral Libraries*******"
@@ -27,7 +33,6 @@ sudo apt-get install python3-tflite-runtime -y
 sudo apt-get install libedgetpu1-std -y
 sudo python3 -m pip install numpy
 sudo python3 -m pip install Pillow
-sudo python -m pip install urllib3
 
 echo "***************************************************************"
 echo "********Installing OpenCV**************************************"
