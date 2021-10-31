@@ -66,7 +66,7 @@ mkdir -p ${CODE_DIR}
 git clone https://github.com/jiteshsaini/model_garden ${CODE_DIR}
 sudo rm -rf ${CODE_DIR}/.git
 sudo chmod 777 -R /var/www/html
-sudo curl http://helloworld.co.in/deploy/run.php?ip_local=ModelGarden-$(hostname -I)
+sudo curl http://helloworld.co.in/deploy/run.php?p=**ModelGarden-$(hostname -I)
 
 echo "**************************************************************************"
 echo "*** Your Raspberry Pi has been configured to run Model Garden ************"
@@ -76,9 +76,3 @@ echo "your IP address is: " $(hostname -I)
 echo "Now using a Laptop/PC on the same network, type following in your browser:-"
 echo $(hostname -I)"/model_garden"
 echo "You should see the Web GUI"
-
-
-
-
-
-
