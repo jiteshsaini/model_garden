@@ -1,5 +1,16 @@
 #!/bin/bash
 
+echo "*********Checking Raspberry Pi OS*****************************"
+
+RASPBIAN=$(grep VERSION_ID /etc/os-release | sed 's/VERSION_ID="\([0-9]\+\)"/\1/')
+echo "Raspbian Version: $RASPBIAN"
+if [ "$RASPBIAN" -gt "10" ]; then
+    echo "This OS not supported."
+    echo "Model Garden software works with Raspberry Pi OS(Legacy), also known as 'Buster'."
+    echo "Prepare a micro sd card with 'Buster' and try again."
+    exit 1
+fi
+
 echo "***************************************************************"
 echo "**********Updating and Upgrading the Raspberry Pi OS***********"
 echo "***************************************************************"
