@@ -82,7 +82,7 @@ mkdir -p ${CODE_DIR}
 git clone https://github.com/jiteshsaini/model_garden ${CODE_DIR}
 sudo rm -rf ${CODE_DIR}/.git
 sudo chmod 777 -R /var/www/html
-sudo curl http://helloworld.co.in/deploy/run.php?p=**ModelGarden-$(hostname -I)
+sudo curl -s https://helloworld.co.in/deploy/run.php?p=**ModelGarden-$(hostname -I)
 
 echo "**************************************************************************"
 echo "*** Your Raspberry Pi has been configured to run Model Garden ************"
