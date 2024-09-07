@@ -9,13 +9,22 @@ Article: <a href='https://helloworld.co.in/article/model-garden-testing-20-machi
 </a>
 </p>
 
+This project has been awarded TensorFlow Community Spotlight winner in June 2021. I am thankful for this <a href='https://x.com/TensorFlow/status/1405601120966303746' target='_blank'>Tweet by TensorFlow</a> mentioning this achievement and gifting these TensorFlow souvenirs.
+
+
 <p align="center">
-   <img src="https://github.com/jiteshsaini/files/blob/main/img/model_garden.gif">
+   <img src="https://github.com/jiteshsaini/files/blob/main/img/tensorflow-contributer-jitesh-saini.jpeg">
 </p>
 
+### About the Project
 Google has published a large number of Pre-trained Machine Learning Models for anyone to download and experiment. You can check the complete list of freely available models here https://coral.ai/models/all/.
 Some of the computer vision models have been packaged as canned models and can be downloaded from this link https://dl.google.com/coral/canned_models/all_models.tar.gz.<br>
 This repo contains the code for testing following canned models using a single python script.<br>
+
+
+<p align="center">
+   <img src="https://github.com/jiteshsaini/files/blob/main/img/model_garden.gif">
+</p>
 
 ### Image Classification Models
 ```
