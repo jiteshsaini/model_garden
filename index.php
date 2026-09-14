@@ -7,6 +7,29 @@ website: https://helloworld.co.in
 Watch this video to see this code in action:-
 https://youtu.be/7gWCekMy1mw
 -->
+<?php
+// The Coral USB Accelerator enumerates as Global Unichip until firmware is
+// pushed to it, then as Google.
+function coral_attached() {
+	foreach (glob("/sys/bus/usb/devices/*/idVendor") as $vendor_file) {
+		$vid = trim(@file_get_contents($vendor_file));
+		$pid = trim(@file_get_contents(dirname($vendor_file) . "/idProduct"));
+		if (in_array("$vid:$pid", ["1a6e:089a", "18d1:9302"], true)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+$coral = coral_attached();
+$on_coral = $coral && trim(@file_get_contents(__DIR__ . "/web/edgetpu.txt")) === "1";
+$current_model = trim(@file_get_contents(__DIR__ . "/web/model.txt"));
+
+// The address the browser used, so the video frame works from another machine
+// and through a hostname as well as an IP.
+$host = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_ADDR']);
+$link_vid = 'http://' . htmlspecialchars($host, ENT_QUOTES) . ':2205';
+?>
 <html>
 <head>        
    <title>Model Garden</title>
@@ -30,6 +53,21 @@ https://youtu.be/7gWCekMy1mw
 	#box_header txt{
 		margin-right:3%;
 		float:right;
+	}
+	
+	#run_box{
+		margin-left:3%;
+		float:left;
+		font-size:17px;
+	}
+	#run_box input{
+		font-size:17px;
+		min-width:80px;
+	}
+	#video_msg{
+		margin:20% 5%;
+		font-size:22px;
+		color:grey;
 	}
 	
 	#box_camera{
@@ -59,12 +97,10 @@ https://youtu.be/7gWCekMy1mw
 		height:30px;
 		background-color:#011f61;
 		color:white;
-		//float:left;
 		font-size: 17px;
 		margin-top:6%;
 	}
 	.box_models input[type="submit"]:hover {
-		//background-color: blue;
 		color:green;
 	}
 	
@@ -85,27 +121,27 @@ https://youtu.be/7gWCekMy1mw
 			b11:"mobilenet_ssd_v2_coco_quant_postprocess.tflite",
 			b12:"mobilenet_ssd_v2_face_quant_postprocess.tflite"
 		   };
+	var current_model = <?php echo json_encode($current_model); ?>;
+	var stream_url = <?php echo json_encode($link_vid); ?>;
+	var stream_shown = false;
 	
 	function init(){
 		console.log("started..");
-		$.post("/model_garden/web/misc/hw.php",{entry_by: 'model_garden',page: 'index.php'});
+		$.post("web/misc/hw.php",{page: 'index.php'});
+		
+		refresh_status();
+		setInterval(refresh_status, 5000);
+		
+		for (var id in model) {
+			if (model[id] == current_model) {
+				highlight(id);
+			}
+		}
 	}
 	
-	function button_action(id)
+	function highlight(id)
 	{
 		var len = Object.keys(model).length
-		console.log("len:" + len);
-		
-		label=document.getElementById(id).value
-		label=label.toLowerCase(label);
-		console.log("label:" + label);
-		var mdl = model[id]
-		console.log("mdl:" + mdl);
-		$.post("web/comm.php",{model_file: mdl});
-		
-		$.post("web/comm.php",{command_generated:1});
-		
-		console.log("id:" + id);
 		var i;
 		for (i = 1; i <= len; i++) {
 			id1='b'+i;
@@ -116,7 +152,17 @@ https://youtu.be/7gWCekMy1mw
 		
 		document.getElementById(id).style.backgroundColor="#00ff00";
 		document.getElementById(id).style.color="black";
+	}
+	
+	function button_action(id)
+	{
+		var mdl = model[id]
+		console.log("mdl:" + mdl);
+		$.post("web/comm.php",{model_file: mdl});
 		
+		$.post("web/comm.php",{command_generated:1});
+		
+		highlight(id);
 	}
 	
 	function button_coral(){
@@ -142,27 +188,73 @@ https://youtu.be/7gWCekMy1mw
 	}
 	
 	
+	function refresh_status(){
+		$.getJSON("web/control.php", show_status);
+	}
+	
+	function show_status(s){
+		var btn = document.getElementById('run');
+		var frame = document.getElementById('video');
+		var note = document.getElementById('video_msg');
+		
+		document.getElementById('run_msg').textContent = s.message;
+		
+		if (s.running) {
+			btn.value = "Stop";
+			btn.disabled = !s.owned;
+			if (!stream_shown) {
+				frame.src = stream_url;
+				frame.style.display = "inline";
+				note.style.display = "none";
+				stream_shown = true;
+			}
+		} else {
+			btn.value = "Start";
+			btn.disabled = s.starting;
+			if (stream_shown) {
+				frame.src = "about:blank";
+				frame.style.display = "none";
+				stream_shown = false;
+			}
+			note.style.display = "block";
+			note.textContent = s.starting ? "Starting - loading the camera and the model..." : s.message;
+			if (s.starting) {
+				setTimeout(refresh_status, 1000);
+			}
+		}
+	}
+	
+	function button_run(){
+		var btn = document.getElementById('run');
+		var action = (btn.value == "Start") ? "start" : "stop";
+		btn.disabled = true;
+		$.post("web/control.php", {action: action}, show_status, "json");
+	}
+	
    </script>
 </head> 
 <body onload="init()">
 <?php
 
-$host=$_SERVER['SERVER_ADDR'];//192.168.1.20
-
-$link_vid= 'http://'.$host.':2205';
-
 echo"<div id='box_outer'>";//------------------------
 	echo"<div align='center' id='box_header'>";
 		echo"<b>Model Garden</b><br>";
 		
-		echo"<txt>
-				Coral USB Accelerator: <input id='coral' width='200px' type='submit' onclick=button_coral(); value='disconnected'/>
+		echo"<txt id='run_box'>
+				<input id='run' type='submit' onclick=button_run(); value='Start' disabled/> <span id='run_msg'>Checking...</span>
 			</txt>";
+		
+		if ($coral) {
+			$caption = $on_coral ? "connected" : "disconnected";
+			$colour = $on_coral ? "#66ff66" : "white";
+			echo"<txt>
+				Coral USB Accelerator: <input id='coral' type='submit' onclick=button_coral(); value='$caption' style='background-color:$colour'/>
+			</txt>";
+		}
 		
 		
 	echo"</div>";
 	
-	//echo"<b id='info'></b>";
 	echo"<div align='center' class='box_models'>";//------------------------
 
 		echo"<div class='div_txt'>Classification</div>";
@@ -184,7 +276,8 @@ echo"<div id='box_outer'>";//------------------------
 	echo"</div>";
 	
 	echo"<div align='center' id='box_camera'>";
-		echo"<iframe src='$link_vid' height='650px' width='95%'></iframe>";
+		echo"<div id='video_msg'>Checking whether Model Garden is running...</div>";
+		echo"<iframe id='video' height='650px' width='95%' style='display:none'></iframe>";
 	echo"</div>";
 	
 	

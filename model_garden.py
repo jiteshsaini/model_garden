@@ -19,32 +19,35 @@ https://youtu.be/7gWCekMy1mw
 
 '''
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
+import collections
+import ctypes
+import glob
+import os
 import re
+import threading
 import time
 
 import numpy as np
 
 from PIL import Image
 
-import tflite_runtime.interpreter as tflite
+# tflite_runtime has no wheel for the Python on current Raspberry Pi OS.
+# ai-edge-litert is its successor and keeps the same Interpreter API.
+from ai_edge_litert.interpreter import Interpreter, load_delegate
 
-import os
 import cv2
 
-cap = cv2.VideoCapture(0)
+import camera
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+WEB = os.path.join(HERE, 'web')
 
 fps=1
-inference_time_ms=''
+inference_time_ms=0.0
 
-interpreter=''
-labels=''
 model=''
-model_type=''
 model_dir = '/var/www/html/coralai_models'
+default_model = 'mobilenet_v1_1.0_224_quant.tflite'
   
 model_dict =	{
   "mobilenet_v1_1.0_224_quant.tflite": "imagenet_labels.txt",
@@ -61,8 +64,6 @@ model_dict =	{
   "mobilenet_ssd_v2_face_quant_postprocess.tflite": "coco_labels.txt"
 }
 
-
-        
         
 #---------Flask----------------------------------------
 from flask import Flask, Response
@@ -72,13 +73,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    #return "Default Message"
     return render_template("index.html")
 
 @app.route('/video_feed')
 def video_feed():
-    #global cap
-    return Response(main(),
+    return Response(stream(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
                     
 #-------------------------------------------------------------
@@ -91,7 +90,6 @@ def input_image_size(interpreter):
 def set_input_tensor(interpreter, image):
   """Sets the input tensor."""
   image = image.resize((input_image_size(interpreter)[0:2]), resample=Image.NEAREST)
-  #input_tensor(interpreter)[:, :] = image
     
   tensor_index = interpreter.get_input_details()[0]['index']
   input_tensor = interpreter.tensor(tensor_index)()[0]
@@ -115,7 +113,6 @@ def invoke_interpreter(interpreter):
 #--------------------object detection--------------------------------------------------
 #this technique is by google-coral API at 
 #https://github.com/google-coral/pycoral/blob/master/pycoral/adapters/detect.py
-import collections
 Object = collections.namedtuple('Object', ['id', 'score', 'bbox'])
 
 class BBox(collections.namedtuple('BBox', ['xmin', 'ymin', 'xmax', 'ymax'])):
@@ -128,13 +125,11 @@ class BBox(collections.namedtuple('BBox', ['xmin', 'ymin', 'xmax', 'ymax'])):
 def detect_objects(interpreter, image, score_threshold=0.6, top_k=6):
     """Returns list of detected objects."""
     set_input_tensor(interpreter, image)
-    #interpreter.invoke()
     invoke_interpreter(interpreter)
     
     boxes = get_output_tensor(interpreter, 0)
     class_ids = get_output_tensor(interpreter, 1)
     scores = get_output_tensor(interpreter, 2)
-    count = int(get_output_tensor(interpreter, 3))
 
     def make(i):
         ymin, xmin, ymax, xmax = boxes[i]
@@ -158,7 +153,6 @@ def detect_objects(interpreter, image, score_threshold=0.6, top_k=6):
 def classify_image(interpreter, image, top_k=3):
   """Returns a sorted array of classification results."""
   set_input_tensor(interpreter, image)
-  #interpreter.invoke()
   invoke_interpreter(interpreter)
   
   output_details = interpreter.get_output_details()[0]
@@ -169,7 +163,6 @@ def classify_image(interpreter, image, top_k=3):
     scale, zero_point = output_details['quantization']
     output = scale * (output - zero_point)
 
-  #ordered = np.argpartition(-output, top_k)
   ordered = np.argsort(output)[::-1][:top_k]
   return [(i, output[i]) for i in ordered[:top_k]]
 
@@ -203,7 +196,7 @@ def overlay_text_classification(results, labels, cv2_im):
       
       print(lbl, "=", pred)
                     
-      txt1=lbl + "(" + str(pred) + ")"
+      txt1=lbl + " ({:.2f})".format(pred)
       cv2_im = cv2.rectangle(cv2_im, (15,45 + j*35), (160, 65 + j*35), (0,0,0), -1)
       cv2_im = cv2.putText(cv2_im, txt1, (20, 60 + j*35),font, 0.5, (255, 255, 255), 1)
       
@@ -241,45 +234,43 @@ def overlay_text_detection(objs, labels, cv2_im):
           cv2_im = cv2.rectangle(cv2_im, (x0, y0), (x1, y1), box_color, thickness)
           cv2_im = cv2.rectangle(cv2_im, (x0,y1-20), (x1, y1), (255,255,255), -1)
           cv2_im = cv2.putText(cv2_im, text3, (x0, y1-5),font, 0.6, text_color, thickness)
-        except:
-          #log_error()
+        except Exception:
           pass
     
     return cv2_im
 
-#------Making Interpreter---------------------------------------------------------
-import platform
+#------Coral USB Accelerator---------------------------------------------------------
 
-EDGETPU_SHARED_LIB = {
-  'Linux': 'libedgetpu.so.1',
-  'Darwin': 'libedgetpu.1.dylib',
-  'Windows': 'edgetpu.dll'
-}[platform.system()]
-      
-def make_interpreter(path, edgetpu):
-    
-    if(edgetpu=='0'):
-        interpreter = tflite.Interpreter(model_path=path)
-    else:
-      path, *device = path.split('@')
-      path = modify_filename(path)
-      interpreter = tflite.Interpreter(model_path=path,experimental_delegates=[tflite.load_delegate(EDGETPU_SHARED_LIB,{'device': device[0]} if device else {})])
-        
-        
-    print('Loading Model: {} '.format(path))
-    
-    return interpreter
+EDGETPU_SHARED_LIB = 'libedgetpu.so.1'
 
-def modify_filename(path):
-  global model
-  
-  arr=path.split(".tflite")
-  path1=arr[0] + "_edgetpu.tflite"
-  
-  arr1=path1.split("/")
-  model = arr1[len(arr1)-1]
-  
-  return path1
+# The accelerator enumerates as Global Unichip until firmware is pushed to it,
+# then as Google. Both mean it is attached.
+CORAL_USB_IDS = {("1a6e", "089a"), ("18d1", "9302")}
+
+def coral_attached():
+    """True if a Coral USB Accelerator is plugged in and its runtime is installed.
+
+    Checked before load_delegate is ever called: without the accelerator that
+    call fails, and against a mismatched runtime it crashes the process
+    outright, which no try/except can catch.
+    """
+    for vendor_file in glob.glob('/sys/bus/usb/devices/*/idVendor'):
+        try:
+            vid = open(vendor_file).read().strip()
+            pid = open(vendor_file[:-len('idVendor')] + 'idProduct').read().strip()
+        except OSError:
+            continue
+        if (vid, pid) in CORAL_USB_IDS:
+            try:
+                ctypes.CDLL(EDGETPU_SHARED_LIB)
+                return True
+            except OSError:
+                print("Coral attached, but libedgetpu is not installed")
+                return False
+    return False
+
+def edgetpu_filename(path):
+  return path.split(".tflite")[0] + "_edgetpu.tflite"
 
 #--------------------------------------------------------------------------
 
@@ -304,119 +295,144 @@ def get_model_type(model):
     return 1 #detection
   else:
     return 0 #classification
+
+#----------Files written by the Web GUI (web/comm.php)------------------------------
+
+def read_web_file(name, default):
+  try:
+    with open(os.path.join(WEB, name)) as f:
+      return f.read().strip() or default
+  except OSError:
+    return default
+
+def write_web_file(name, value):
+  try:
+    with open(os.path.join(WEB, name), 'w') as f:
+      f.write(value)
+  except OSError as e:
+    print("cannot write web/" + name, e)
+
 #--------------------------------------------------------------------------
-def init():
-  global interpreter, labels, model_type, model, model_dir
+def load_model():
+  global model
   
-  with open('web/edgetpu.txt','r') as f:
-    edgetpu=f.read()
+  selected = read_web_file('model.txt', default_model)
+  if selected not in model_dict:
+    print("unknown model in web/model.txt:", selected)
+    selected = default_model
   
-  with open('web/model.txt','r') as f:
-    model=f.read()
+  label = model_dict[selected]
+  model_path = os.path.join(model_dir, selected)
+  interpreter = None
   
-  print (model, ">>>>>>>>>>>>>>>>>>>")
+  if read_web_file('edgetpu.txt', '0') == '1':
+    if coral_attached():
+      try:
+        interpreter = Interpreter(model_path=edgetpu_filename(model_path),
+                                  experimental_delegates=[load_delegate(EDGETPU_SHARED_LIB)])
+        model_path = edgetpu_filename(model_path)
+      except (ValueError, RuntimeError, OSError) as e:
+        print("Coral could not load the model, using the CPU:", e)
+    else:
+      print("No Coral USB Accelerator attached, using the CPU")
+    if interpreter is None:
+      write_web_file('edgetpu.txt', '0')
   
-  label = model_dict[model]
-  print (label, "******************")
-  
-  model_type=get_model_type(model)
-  print (model_type, "^^^^^^^^^^^^^")
-  
-  model_path=os.path.join(model_dir,model)
-  interpreter = make_interpreter(model_path, edgetpu)
+  if interpreter is None:
+    interpreter = Interpreter(model_path=model_path)
   
   interpreter.allocate_tensors()
+  model = os.path.basename(model_path)
+  print('Loading Model: {} '.format(model_path))
   
-  
-  '''
-  _, input_height, input_width, _ = interpreter.get_input_details()[0]['shape']
-  print (input_height,input_width)
- 
-  name = interpreter.get_input_details()[0]['name']
-  print (name)
- 
-  input_details = interpreter.get_input_details()
-  print (input_details)
-  '''
-  
-  label_path=os.path.join(model_dir,label)
-  labels = load_labels(label_path)
+  labels = load_labels(os.path.join(model_dir, label))
+  return interpreter, labels, get_model_type(selected)
 
-def check_command_file():
-  f = open("web/command_received.txt", "r")
-  cmd=f.read()
-  f.close()
-        
-  if (cmd=="1"):
-    f = open("web/command_received.txt", "w")
-    f.write("0")
-    f.close()
+def command_received():
+  if read_web_file('command_received.txt', '0') == '1':
+    write_web_file('command_received.txt', '0')
     print("################# Loading Model ##########################")
-    init()
+    return True
+  return False
 
-def reset_edgetpu():
-  f = open("web/edgetpu.txt", "w")
-  f.write("0")
-  f.close()
-  print("----Set No hardware Acceleration during initial run------")
+#----------One inference loop, shared by every browser viewing the stream-----------
+
+# Each viewer used to start its own loop, so a second browser tab doubled the
+# work on the same camera. Now one worker produces frames and each viewer
+# receives the latest one; the worker idles while nobody is watching.
+frame_ready = threading.Condition()
+latest_jpeg = None
+viewers = 0
+
+def worker():
+  global fps, latest_jpeg
   
-def main():
-  global fps
-  global interpreter, labels, model_type
+  cap = camera.VideoCapture()
+  interpreter = None
   
-  reset_edgetpu()
-  
-  init()
-  
-  #while cap.isOpened():
   while True:
+    with frame_ready:
+      while viewers == 0:
+        frame_ready.wait()
     
-        start_time=time.time()
-        
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        cv2_im = frame
-        #cv2_im = cv2.flip(cv2_im, 0)
-        #cv2_im = cv2.flip(cv2_im, 1)
+    if interpreter is None or command_received():
+      # release the previous model, and the Coral with it, before loading the next
+      interpreter = None
+      interpreter, labels, model_type = load_model()
+    
+    start_time=time.time()
+    
+    ret, frame = cap.read()
+    if not ret:
+      time.sleep(0.5)
+      continue
+    
+    cv2_im = frame
+    cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(cv2_im_rgb)
+    
+    if(model_type==0):
+      results = classify_image(interpreter, image)
+      cv2_im = overlay_text_classification(results, labels, cv2_im)
+    else:
+      results = detect_objects(interpreter, image)
+      cv2_im = overlay_text_detection(results, labels, cv2_im)
+    
+    cv2_im = overlay_text_common(cv2_im)
+    
+    ret, jpeg = cv2.imencode('.jpg', cv2_im)
+    with frame_ready:
+      latest_jpeg = jpeg.tobytes()
+      frame_ready.notify_all()
+    
+    elapsed_ms = (time.time() - start_time) * 1000
+    fps=round(1000/elapsed_ms,1)
+    print("--------fps: ",fps,"---------------")
 
-        cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
-        image = Image.fromarray(cv2_im_rgb)
-       
-        if(model_type==0):
-          results = classify_image(interpreter, image)
-          label_id, prob = results[0]
-          print(results)
-          cv2_im = overlay_text_classification(results, labels, cv2_im)
-          
-        else:
-          results = detect_objects(interpreter, image)
-          cv2_im = overlay_text_detection(results, labels, cv2_im)
-        
+def stream():
+  global viewers
+  
+  with frame_ready:
+    viewers += 1
+    frame_ready.notify_all()
+  try:
+    sent = None
+    while True:
+      with frame_ready:
+        frame_ready.wait_for(lambda: latest_jpeg is not sent, timeout=5)
+        pic = latest_jpeg
+      if pic is None or pic is sent:
+        continue
+      sent = pic
+      #Flask streaming
+      yield (b'--frame\r\n'
+             b'Content-Type: image/jpeg\r\n\r\n' + pic + b'\r\n\r\n')
+  finally:
+    with frame_ready:
+      viewers -= 1
 
-        cv2_im = overlay_text_common(cv2_im)
-        
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-            
-        #cv2.imshow('Model Garden', cv2_im)
-        ret, jpeg = cv2.imencode('.jpg', cv2_im)
-        pic = jpeg.tobytes()
-        
-        #Flask streaming
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + pic + b'\r\n\r\n')
-               
-
-        check_command_file()
-        
-        elapsed_ms = (time.time() - start_time) * 1000
-        fps=round(1000/elapsed_ms,1)
-        print("--------fps: ",fps,"---------------")
-        
 if __name__ == '__main__':
+  # always start on the CPU; the Web GUI switches to the Coral
+  write_web_file('edgetpu.txt', '0')
+  threading.Thread(target=worker, daemon=True).start()
   app.run(host='0.0.0.0', port=2205, threaded=True) # Run FLASK
-  main()
-
-
