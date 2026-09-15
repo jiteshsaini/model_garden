@@ -18,8 +18,9 @@ This project has been awarded TensorFlow Community Spotlight winner in June 2021
 </p>
 
 ### About the Project
-Google has published a large number of pre-trained Machine Learning models for anyone to download and experiment with. Some of the computer vision models have been packaged as canned models and can be downloaded from https://dl.google.com/coral/canned_models/all_models.tar.gz.<br>
-This repo tests the following canned models, switched from a web page while they run, on the Raspberry Pi's CPU or on a Coral USB Accelerator.
+Model Garden is an educational tool for understanding how machine learning models behave. It runs a model on a live camera feed on a Raspberry Pi, and a web page lets you switch to a different model while it runs. Point the camera at something and step through the models: you see straight away how their answers, their confidence and their speed differ, and how much a Coral USB Accelerator changes.
+
+The models are pre-trained computer-vision models published by Google, packaged as canned models at https://dl.google.com/coral/canned_models/all_models.tar.gz: nine for image classification and three for object detection, each in a version for the Raspberry Pi's CPU and a version compiled for the Coral.
 
 <p align="center">
    <img src="https://raw.githubusercontent.com/jiteshsaini/files/main/img/model_garden.gif">
