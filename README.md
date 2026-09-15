@@ -140,38 +140,37 @@ No `chmod 777`, and nothing added to `/etc/sudoers`.
 ### Raspberry Pi 3A+
 
 Measured on Raspberry Pi OS Trixie, on a Raspberry Pi 3A+ with the Raspberry Pi
-camera at 640x480. Frames per second include reading the camera, drawing the
-results and encoding the video stream, not just the model.
+camera at 640x480.
 
-| Model | CPU inference | CPU FPS | Coral inference | Coral FPS |
-|---|---|---|---|---|
-| mobilenet_v1 | 360 ms | 2.5 | 10 ms | 19.1 |
-| mobilenet_v2 | 220 ms | 3.8 | 12 ms | 17.7 |
-| mobilenet_v2 bird / insect / plant | 220 ms | 3.8 | 12 ms | 18.5 |
-| inception_v1 | 880 ms | 1.1 | 19 ms | 14.9 |
-| inception_v2 | 1150 ms | 0.8 | 154 ms | 5.2 |
-| inception_v3 | 3250 ms | 0.3 | 500 ms | 1.9 |
-| inception_v4 | 7050 ms | 0.1 | 1020 ms | 1.0 |
-| mobilenet_ssd_v1 (objects) | 760 ms | 1.2 | 42 ms | 16.2 |
-| mobilenet_ssd_v2 (objects) | 540 ms | 1.7 | 48 ms | 14.6 |
-| mobilenet_ssd_v2 (faces) | 550 ms | 1.7 | 26 ms | 21.9 |
+| Model | CPU inference | Coral inference |
+|---|---|---|
+| mobilenet_v1 | 360 ms | 10 ms |
+| mobilenet_v2 | 220 ms | 12 ms |
+| mobilenet_v2 bird / insect / plant | 220 ms | 12 ms |
+| inception_v1 | 880 ms | 19 ms |
+| inception_v2 | 1150 ms | 154 ms |
+| inception_v3 | 3250 ms | 500 ms |
+| inception_v4 | 7050 ms | 1020 ms |
+| mobilenet_ssd_v1 (objects) | 760 ms | 42 ms |
+| mobilenet_ssd_v2 (objects) | 540 ms | 48 ms |
+| mobilenet_ssd_v2 (faces) | 550 ms | 26 ms |
 
 ### Raspberry Pi 4
 
 Measured on Raspberry Pi OS Trixie, on a Raspberry Pi 4 with a USB webcam at 640x480.
 
-| Model | CPU inference | CPU FPS | Coral inference | Coral FPS |
-|---|---|---|---|---|
-| mobilenet_v1 | 94 ms | 7.6 | 4 ms | 7.7 |
-| mobilenet_v2 | 59 ms | 7.6 | 5 ms | 7.7 |
-| mobilenet_v2 bird / insect / plant | 59 ms | 7.6 | 5 ms | 7.6 |
-| inception_v1 | 243 ms | 3.9 | 6 ms | 7.7 |
-| inception_v2 | 313 ms | 3.1 | 20 ms | 7.6 |
-| inception_v3 | 895 ms | 1.1 | 64 ms | 7.7 |
-| inception_v4 | 1915 ms | 0.5 | 125 ms | 7.3 |
-| mobilenet_ssd_v1 (objects) | 203 ms | 4.5 | 13 ms | 7.6 |
-| mobilenet_ssd_v2 (objects) | 148 ms | 6.3 | 13 ms | 7.6 |
-| mobilenet_ssd_v2 (faces) | 148 ms | 6.2 | 10 ms | 7.7 |
+| Model | CPU inference | Coral inference |
+|---|---|---|
+| mobilenet_v1 | 94 ms | 4 ms |
+| mobilenet_v2 | 59 ms | 5 ms |
+| mobilenet_v2 bird / insect / plant | 59 ms | 5 ms |
+| inception_v1 | 243 ms | 6 ms |
+| inception_v2 | 313 ms | 20 ms |
+| inception_v3 | 895 ms | 64 ms |
+| inception_v4 | 1915 ms | 125 ms |
+| mobilenet_ssd_v1 (objects) | 203 ms | 13 ms |
+| mobilenet_ssd_v2 (objects) | 148 ms | 13 ms |
+| mobilenet_ssd_v2 (faces) | 148 ms | 10 ms |
 
 ### 2021, on Raspberry Pi OS Buster
 
