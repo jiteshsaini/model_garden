@@ -130,6 +130,9 @@ def detect_objects(interpreter, image, score_threshold=0.6, top_k=6):
     boxes = get_output_tensor(interpreter, 0)
     class_ids = get_output_tensor(interpreter, 1)
     scores = get_output_tensor(interpreter, 2)
+    # Only the first `count` results are valid. The slots after them can hold
+    # anything, and on the Coral that includes infinite box coordinates.
+    count = int(get_output_tensor(interpreter, 3))
 
     def make(i):
         ymin, xmin, ymax, xmax = boxes[i]
@@ -141,7 +144,8 @@ def detect_objects(interpreter, image, score_threshold=0.6, top_k=6):
                       xmax=np.minimum(1.0, xmax),
                       ymax=np.minimum(1.0, ymax)))
 
-    return [make(i) for i in range(top_k) if scores[i] >= score_threshold]
+    return [make(i) for i in range(min(top_k, count))
+            if scores[i] >= score_threshold and np.all(np.isfinite(boxes[i]))]
 
 
 #--------------------------------------------------------------------
@@ -391,12 +395,21 @@ def worker():
     cv2_im_rgb = cv2.cvtColor(cv2_im, cv2.COLOR_BGR2RGB)
     image = Image.fromarray(cv2_im_rgb)
     
-    if(model_type==0):
-      results = classify_image(interpreter, image)
-      cv2_im = overlay_text_classification(results, labels, cv2_im)
-    else:
-      results = detect_objects(interpreter, image)
-      cv2_im = overlay_text_detection(results, labels, cv2_im)
+    try:
+      if(model_type==0):
+        results = classify_image(interpreter, image)
+        cv2_im = overlay_text_classification(results, labels, cv2_im)
+      else:
+        results = detect_objects(interpreter, image)
+        cv2_im = overlay_text_detection(results, labels, cv2_im)
+    except Exception as e:
+      # An error here used to end this thread, and the video froze for good.
+      print("frame skipped:", repr(e))
+      if model.endswith("_edgetpu.tflite"):
+        print("the Coral failed, reloading the model on the CPU")
+        write_web_file('edgetpu.txt', '0')
+        interpreter = None
+      continue
     
     cv2_im = overlay_text_common(cv2_im)
     
