@@ -29,6 +29,23 @@ ok()   { echo "  [ ok ] $1"; }
 warn() { echo "  [warn] $1"; }
 die()  { echo "  [FAIL] $1"; exit 1; }
 
+section() {
+  echo
+  echo "=================================================="
+  echo "  $1"
+  echo "=================================================="
+}
+
+reboot_box() {
+  echo
+  echo "  ============================================================"
+  echo "   REBOOT NEEDED - kernel $NEWEST was installed,"
+  echo "   but $RUNNING is still running."
+  echo
+  for line in "$@"; do echo "   $line"; done
+  echo "  ============================================================"
+}
+
 MODEL=$(tr -d '\0' < /proc/device-tree/model 2>/dev/null)
 OSVER=$(. /etc/os-release; echo "${VERSION_CODENAME:-unknown}")
 ARCH=$(uname -m)
@@ -36,8 +53,7 @@ IP=$(hostname -I | awk '{print $1}')
 ID=$(grep -m1 ^Serial /proc/cpuinfo | sha256sum | cut -c1-16)
 MEM=$(free -m | awk '/Mem:/{print $2}')
 
-echo
-echo "This machine"
+section "Checking this machine"
 echo "  Board:  ${MODEL:-unknown}"
 echo "  OS:     $(. /etc/os-release; echo "${PRETTY_NAME:-unknown}")"
 echo "  RAM:    $MEM MB"
@@ -51,14 +67,29 @@ if [ "$MEM" -lt 600 ] && [ "$(systemctl get-default)" = "graphical.target" ]; th
   warn "To boot to the console instead: sudo systemctl set-default multi-user.target"
 fi
 
-echo
-echo "Installing packages. The system is updated first; on an older board that can take an hour."
+section "Updating the system"
+echo "  The slow part: on an older board this can take an hour. The output below"
+echo "  keeps moving; it is not stuck."
 apt-get update 2>&1 | tee -a "$LOG" >/dev/null || warn "apt-get update failed - see $LOG"
 apt-get full-upgrade -y 2>&1 | tee -a "$LOG" || warn "the upgrade did not finish cleanly - continuing"
+
+# A newer kernel only runs after a reboot, and the camera stack that came with
+# it may not work against the old one until then.
+RUNNING=$(uname -r)
+NEWEST=$(ls /lib/modules | grep -- "+${RUNNING#*+}\$" | sort -V | tail -1)
+REBOOT=0
+if [ -n "$NEWEST" ] && [ "$NEWEST" != "$RUNNING" ]; then
+  REBOOT=1
+  reboot_box "The rest of the install carries on, but the camera may not work" \
+             "until you reboot. You will be reminded at the end."
+fi
+
+section "Installing packages"
 apt-get install -y apache2 php libapache2-mod-php \
     python3-numpy python3-pil python3-flask python3-picamera2 \
     rpicam-apps curl git 2>&1 | tee -a "$LOG" || die "package install failed - see $LOG"
 
+section "Installing Python packages (OpenCV, LiteRT)"
 # Headless, and 4.x: PyPI now resolves the unpinned name to 5.x, and the full
 # build pulls ~500 MB of GUI libraries this never opens.
 OPENCV_PIN="opencv-python-headless==4.14.0.94"
@@ -74,6 +105,7 @@ python3 -c "import ai_edge_litert" 2>/dev/null \
   || pip3 install --break-system-packages "$LITERT_PIN" 2>&1 | tee -a "$LOG" \
   || die "$LITERT_PIN failed to install"
 
+section "Installing Coral USB Accelerator support"
 # Google's own libedgetpu targets TensorFlow Lite ~2.5 and crashes under
 # ai-edge-litert; this community rebuild matches it.
 if dpkg-query -W -f='${Version}' libedgetpu1-std 2>/dev/null | grep -q tf2.19.1; then
@@ -92,11 +124,11 @@ else
   done
 fi
 
-echo
+section "Downloading the models"
 if [ -f "$MODELS/mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite" ]; then
   ok "models already in $MODELS"
 else
-  echo "Downloading the models (185 MB)"
+  echo "  185 MB from Google - a few minutes on a slow connection"
   mkdir -p "$TMP/models"
   if curl -fL --progress-bar -o "$TMP/all_models.tar.gz" "$MODELS_URL" \
      && tar -xzf "$TMP/all_models.tar.gz" -C "$TMP/models"; then
@@ -110,6 +142,7 @@ else
   fi
 fi
 
+section "Installing the code"
 if git clone -q --depth 1 "$REPO" "$TMP/repo" && [ -f "$TMP/repo/model_garden.py" ]; then
   rm -rf "$TMP/repo/.git"
   if [ -e "$CODE" ]; then
@@ -120,6 +153,7 @@ else
   die "could not fetch the code from $REPO"
 fi
 
+section "Setting permissions and restarting Apache"
 # The web page starts model_garden.py as www-data, which reaches the camera and
 # the Coral through video and plugdev (libedgetpu's udev rule grants the
 # accelerator to plugdev). You join the same groups so a copy started from a
@@ -162,8 +196,7 @@ ST=ok
 check() {
   if "$2"; then printf "  %-36s yes\n" "$1"; else printf "  %-36s NO\n" "$1"; ST=fail; fi
 }
-echo
-echo "Checks"
+section "Checking the install"
 check "web page served" page_served
 check "web page can save its settings" page_can_write
 check "web page can use camera and Coral" page_can_start
@@ -178,15 +211,16 @@ else
   printf "  %-36s not attached (optional)\n" "Coral USB Accelerator"
 fi
 
-RUNNING=$(uname -r)
-NEWEST=$(ls /lib/modules | grep -- "+${RUNNING#*+}\$" | sort -V | tail -1)
-
 curl -s -m 5 https://helloworld.co.in/deploy/t.php >/dev/null 2>&1 -d \
     "p=$(basename "$REPO" .git)&e=install&s=$ST&i=$ID&m=${MODEL// /+}&o=$OSVER&a=$ARCH&l=$IP" || true
 
-echo
-[ -n "$NEWEST" ] && [ "$NEWEST" != "$RUNNING" ] && echo "  Reboot first: kernel $NEWEST was installed and $RUNNING is running." && echo
-[ "$NEW_GROUPS" -eq 1 ] && echo "  To run it from a terminal, log out and back in first so your new groups apply." && echo
-echo "  Open this in a browser on the same network and press Start:"
-echo "    http://$IP/model_garden"
-echo
+section "Done"
+if [ "$REBOOT" -eq 1 ]; then
+  reboot_box "Reboot now, then open the page:" "" "    sudo reboot" "" "    http://$IP/model_garden"
+  echo
+else
+  [ "$NEW_GROUPS" -eq 1 ] && echo "  To run it from a terminal, log out and back in first so your new groups apply." && echo
+  echo "  Open this in a browser on the same network and press Start:"
+  echo "    http://$IP/model_garden"
+  echo
+fi
