@@ -137,6 +137,8 @@ No `chmod 777`, and nothing added to `/etc/sudoers`.
 
 ## Performance
 
+### Raspberry Pi 3A+
+
 Measured on Raspberry Pi OS Trixie, on a Raspberry Pi 3A+ with the Raspberry Pi
 camera at 640x480. Frames per second include reading the camera, drawing the
 results and encoding the video stream, not just the model.
@@ -154,7 +156,26 @@ results and encoding the video stream, not just the model.
 | mobilenet_ssd_v2 (objects) | 540 ms | 1.7 | 48 ms | 14.6 |
 | mobilenet_ssd_v2 (faces) | 550 ms | 1.7 | 26 ms | 21.9 |
 
-The original measurements, made on Raspberry Pi OS Buster in 2021:
+### Raspberry Pi 4
+
+Measured on Raspberry Pi OS Trixie, on a Raspberry Pi 4 with a USB webcam at 640x480.
+
+| Model | CPU inference | CPU FPS | Coral inference | Coral FPS |
+|---|---|---|---|---|
+| mobilenet_v1 | 94 ms | 7.6 | 4 ms | 7.7 |
+| mobilenet_v2 | 59 ms | 7.6 | 5 ms | 7.7 |
+| mobilenet_v2 bird / insect / plant | 59 ms | 7.6 | 5 ms | 7.6 |
+| inception_v1 | 243 ms | 3.9 | 6 ms | 7.7 |
+| inception_v2 | 313 ms | 3.1 | 20 ms | 7.6 |
+| inception_v3 | 895 ms | 1.1 | 64 ms | 7.7 |
+| inception_v4 | 1915 ms | 0.5 | 125 ms | 7.3 |
+| mobilenet_ssd_v1 (objects) | 203 ms | 4.5 | 13 ms | 7.6 |
+| mobilenet_ssd_v2 (objects) | 148 ms | 6.3 | 13 ms | 7.6 |
+| mobilenet_ssd_v2 (faces) | 148 ms | 6.2 | 10 ms | 7.7 |
+
+### 2021, on Raspberry Pi OS Buster
+
+The original measurements:
 
 <p align="center">
    <img src="https://raw.githubusercontent.com/jiteshsaini/files/main/img/graph_pi4.jpeg">
