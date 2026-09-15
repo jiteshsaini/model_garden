@@ -61,11 +61,11 @@ mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite, coco_labels.txt
 Two commands on a fresh Raspberry Pi OS.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jiteshsaini/model_garden/main/install.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/jiteshsaini/model_garden/main/setup_model_garden.sh -o setup_model_garden.sh
 ```
 
 ```bash
-sudo bash install.sh
+sudo bash setup_model_garden.sh
 ```
 
 Downloading first, rather than piping into `sudo bash`, lets you read the script
@@ -178,4 +178,4 @@ choices to small text files that the script checks after every frame.
 | `web/control.php` | Starts and stops `model_garden.py`, and reports whether it is running |
 | `web/comm.php` | Saves the page's choices to `web/model.txt`, `web/edgetpu.txt` and `web/command_received.txt` |
 | `templates/index.html` | The page the video stream is served in |
-| `install.sh` | The installer above |
+| `setup_model_garden.sh` | The installer above |

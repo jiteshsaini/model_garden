@@ -1,13 +1,13 @@
 #!/bin/bash
 # Model Garden - installer for Raspberry Pi OS 12/13 (Bookworm / Trixie).
 #
-#   curl -fsSL https://raw.githubusercontent.com/jiteshsaini/model_garden/main/install.sh -o install.sh
-#   sudo bash install.sh
+#   curl -fsSL https://raw.githubusercontent.com/jiteshsaini/model_garden/main/setup_model_garden.sh -o setup_model_garden.sh
+#   sudo bash setup_model_garden.sh
 #
 # Code goes to /var/www/html/model_garden, models to /var/www/html/coralai_models.
 # An existing copy of either is moved aside, never overwritten.
 
-# `sh install.sh` runs dash, which cannot parse the rest of this file.
+# `sh setup_model_garden.sh` runs dash, which cannot parse the rest of this file.
 if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 [ "$(id -u)" -eq 0 ] || exec sudo bash "$0" "$@"
 
